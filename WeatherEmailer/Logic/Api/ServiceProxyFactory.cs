@@ -15,7 +15,7 @@ namespace WeatherTextMessager.Logic.Api
     public class ServiceProxyFactory: IServiceProxyFactory
     {
         private readonly ILogger _logger;
-        private AppSettings _appSettings;
+        private readonly AppSettings _appSettings;
         public ServiceProxyFactory(ILogger logger, AppSettings appSettings)
         {
             _logger = logger;

@@ -30,7 +30,7 @@ namespace WeatherTextMessager.Logic
 
         public async Task SendWeatherInformation(CancellationToken cancellationToken = default)
         {
-            var cityWithState = $"{ _appSettings.CurrentCity } { _appSettings.CurrentState}";
+            var cityWithState = $"{_appSettings.CurrentCity} {_appSettings.CurrentState}";
 
             var accuWeatherSerivce = _serviceProxyFactory.GetAccuWeatherSerivce();
             var locationKey = await ObtainLocationKey(accuWeatherSerivce, cityWithState, cancellationToken);
