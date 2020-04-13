@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "WeatherTextMessager": {
+      "commandName": "Executable",
+      "executablePath": "C:\\Users\\taha1\\source\\repos\\WeatherTextMessager\\WeatherTextMessager\\bin\\Debug\\netcoreapp3.1\\WeatherTextMessager.exe"
+    }
+  }
+}
