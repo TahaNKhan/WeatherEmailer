@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Net;
 using System.Net.Http;
 using System.Text;
 using System.Text.Json;
@@ -46,18 +47,18 @@ namespace WeatherTextMessager.Logic.Api
                     _logger.Log("Failed to search cities in accuweather, details:");
                     _logger.Log($"Status code: {(int)result.StatusCode}");
                     _logger.Log($"Content: {await result.Content.ReadAsStringAsync()}");
-                    return null;
+                    // End processing
+                    throw new Exception();
                 }
                 var contentString = await result.Content.ReadAsStringAsync();
                 _logger.Log("Sucessfully made a request to AccuWeather");
                 _logger.Log($"Response: {contentString}");
                 return JsonSerializer.Deserialize<IEnumerable<CitySearchResult>>(contentString);
             }
-            catch (HttpRequestException ex)
+            catch (HttpRequestException)
             {
-                _logger.Log("Failed to search cities in accuweather, details:");
-                _logger.Log(ex.ToString());
-                return null;
+                _logger.Log("Failed to search cities in accuweather");
+                throw;
             }
            
         }
@@ -81,7 +82,8 @@ namespace WeatherTextMessager.Logic.Api
                     _logger.Log("Failed to get weather data, details:");
                     _logger.Log($"Status code: {(int)result.StatusCode}");
                     _logger.Log($"Content: {await result.Content.ReadAsStringAsync()}");
-                    return null;
+                    // End processing
+                    throw new Exception();
                 }
                 var contentString = await result.Content.ReadAsStringAsync();
                 _logger.Log("Sucessfully made a request to AccuWeather");

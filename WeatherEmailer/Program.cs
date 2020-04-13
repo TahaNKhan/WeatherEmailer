@@ -33,12 +33,12 @@ namespace WeatherTextMessager
                 //do the actual work here
                 var task = serviceProvider.GetService<ISendWeatherInformationTask>();
                 await task.SendWeatherInformation();
-            } catch (Exception ex)
+                logger.Log("All done!");
+            }
+            catch (Exception ex)
             {
                 logger.Log(ex.ToString());
             }
-
-            logger.Log("All done!");
         }
     }
 }

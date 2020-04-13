@@ -42,19 +42,17 @@ namespace WeatherTextMessager.Logic.Api
             foreach (var toString in to)
             {
                 _logger.Log(toString);
-                email.Bcc.Add(new MailAddress(toString));
+                email.To.Add(new MailAddress(toString));
             }
 
-            if (_appSettings.SendEmails)
-            {
-                using var smtpClient = BuildSmtpClient();
-                await smtpClient.SendMailAsync(email);
-                _logger.Log("Email sent!");
-            }
-            else
+            if (!_appSettings.SendEmails)
             {
                 _logger.Log("Email not sent since it was specified in the configuration");
+                return;
             }
+            using var smtpClient = BuildSmtpClient();
+            await smtpClient.SendMailAsync(email);
+            _logger.Log("Email sent!");
         }
 
         internal virtual SmtpClient BuildSmtpClient()
