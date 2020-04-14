@@ -28,31 +28,41 @@ namespace WeatherTextMessager.Logic.Api
         }
 
 
-        public async Task SendEmailAsync(IEnumerable<string> to, string subject, string body, CancellationToken cancellationToken = default)
+        public async Task SendEmailAsync(IEnumerable<string> recepients, string subject, string body, CancellationToken cancellationToken = default)
         {
-            var email = new MailMessage
-            {
-                Body = body,
-                Subject = subject,
-                From = new MailAddress(_appSettings.Email, "Automation Helper")
-            };
-
-            _logger.Log($"Sending email to:");
-
-            foreach (var toString in to)
-            {
-                _logger.Log(toString);
-                email.To.Add(new MailAddress(toString));
-            }
-
-            if (!_appSettings.SendEmails)
-            {
-                _logger.Log("Email not sent since it was specified in the configuration");
-                return;
-            }
             using var smtpClient = BuildSmtpClient();
-            await smtpClient.SendMailAsync(email);
-            _logger.Log("Email sent!");
+            _logger.Log($"Sending email to:");
+            foreach (var to in recepients)
+            {
+                try
+                {
+                    _logger.Log(to);
+                    var mailMessage = GenerateMailMessage(to, subject, body);
+                    if (_appSettings.SendEmails)
+                        await smtpClient.SendMailAsync(mailMessage);
+                    else
+                        _logger.Log($"Did not send email to {to} due to config settings");
+                }
+                catch (Exception ex)
+                {
+                    _logger.Log($"Failed to send email to: {to}");
+                    _logger.Log(ex.ToString());
+                    continue;
+                }
+            }
+            _logger.Log("Emails processed!");
+        }
+
+        internal virtual MailMessage GenerateMailMessage(string to, string subject, string body)
+        {
+            var mailMessage = new MailMessage
+            {
+                From = new MailAddress(_appSettings.Email, "Automation Helper"),
+                Body = body,
+                Subject = subject
+            };
+            mailMessage.To.Add(new MailAddress(to));
+            return mailMessage;
         }
 
         internal virtual SmtpClient BuildSmtpClient()

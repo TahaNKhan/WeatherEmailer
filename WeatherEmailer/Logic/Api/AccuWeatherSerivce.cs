@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Text;
@@ -19,8 +20,8 @@ namespace WeatherTextMessager.Logic.Api
     }
     public class AccuWeatherSerivce : IAccuWeatherSerivce
     {
-        private Logging.ILogger _logger;
-        private Configuration.AppSettings _appSettings;
+        private readonly Logging.ILogger _logger;
+        private readonly Configuration.AppSettings _appSettings;
         public AccuWeatherSerivce(Logging.ILogger logger, AppSettings appSettings)
         {
             _logger = logger;
@@ -29,13 +30,13 @@ namespace WeatherTextMessager.Logic.Api
 
         public async Task<IEnumerable<CitySearchResult>> SearchCity(string cityWithState, CancellationToken cancellationToken = default)
         {
-            var apiKey = _appSettings.AccuWeatherApiKey;
+            var apiKey = _appSettings.AccuWeatherSettings.ApiKey;
             var baseUrl = "http://dataservice.accuweather.com/locations/v1/cities/search";
             baseUrl += $"?q={HttpUtility.UrlEncode(cityWithState)}";
             baseUrl += $"&apikey={apiKey}";
             baseUrl += $"&language=en-us";
 
-            _logger.Log($"Making a HTTP request to AccuWeather '{baseUrl.Replace(_appSettings.AccuWeatherApiKey, "REDACTED")}'");
+            _logger.Log($"Making a HTTP request to AccuWeather '{baseUrl.Replace(_appSettings.AccuWeatherSettings.ApiKey, "REDACTED")}'");
 
             using var webClient = new HttpClient();
 
@@ -65,12 +66,12 @@ namespace WeatherTextMessager.Logic.Api
 
         public async Task<DailyForecastResponse> GetWeatherData(string locationKey, CancellationToken cancellationToken = default)
         {
-            var apiKey = _appSettings.AccuWeatherApiKey;
+            var apiKey = _appSettings.AccuWeatherSettings.ApiKey;
             var baseUrl = $"http://dataservice.accuweather.com/forecasts/v1/daily/1day/{locationKey}";
             baseUrl += $"?apikey={apiKey}";
             baseUrl += $"&language=en-us";
 
-            _logger.Log($"Making a HTTP request to AccuWeather '{baseUrl.Replace(_appSettings.AccuWeatherApiKey, "REDACTED")}'");
+            _logger.Log($"Making a HTTP request to AccuWeather '{baseUrl.Replace(_appSettings.AccuWeatherSettings.ApiKey, "REDACTED")}'");
 
             using var webClient = new HttpClient();
 
@@ -96,6 +97,49 @@ namespace WeatherTextMessager.Logic.Api
                 _logger.Log(ex.ToString());
                 return null;
             }
+        }
+    }
+    public class FakeAccuWeatherService : IAccuWeatherSerivce
+    {
+        public Task<DailyForecastResponse> GetWeatherData(string locationKey, CancellationToken cancellationToken = default)
+        {
+            var result = new DailyForecastResponse
+            {
+                DailyForecasts = new[]
+                {
+                    new DailyForecast
+                    {
+                        Temperature = new Temperature
+                        {
+                            Minimum = new Minimum
+                            {
+                                Unit = "F",
+                                Value = 40
+                            },
+                            Maximum = new Maximum
+                            {
+                                Unit = "F",
+                                Value = 55
+                            }
+                        }
+                    }
+                },
+                Headline = new Headline
+                {
+                    Text = "Fake weather test"
+                }
+            };
+            return Task.FromResult(result);
+        }
+
+        public Task<IEnumerable<CitySearchResult>> SearchCity(string cityWithState, CancellationToken cancellationToken = default)
+        {
+            var result = new CitySearchResult
+            {
+                Key = "some key"
+            };
+
+            return Task.FromResult(new[] { result }.AsEnumerable());
         }
     }
 }

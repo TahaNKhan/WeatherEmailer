@@ -21,7 +21,13 @@ namespace WeatherTextMessager.Logic.Api
             _logger = logger;
             _appSettings = appSettings;
         }
-        public IAccuWeatherSerivce GetAccuWeatherSerivce() => new AccuWeatherSerivce(_logger, _appSettings);
+        public IAccuWeatherSerivce GetAccuWeatherSerivce()
+        {
+            if (_appSettings.AccuWeatherSettings.UseActualService)
+                return new AccuWeatherSerivce(_logger, _appSettings);
+            _logger.Log("Using fake AccuWeatherService");
+            return new FakeAccuWeatherService();
+        }
 
         public IGmailSerivce GetGmailSerivce() => new GmailSerivce(_appSettings, _logger);
     }
