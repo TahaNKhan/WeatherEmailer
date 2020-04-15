@@ -1,15 +1,17 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
-using WeatherTextMessager.Configuration;
-using WeatherTextMessager.Logging;
+using WeatherEmailer.Logic.Api.AccuWeatherService;
+using WeatherEmailer.Configuration;
+using WeatherEmailer.Logging;
+using WeatherEmailer.Logic.Api.Interfaces;
 
-namespace WeatherTextMessager.Logic.Api
+namespace WeatherEmailer.Logic.Api
 {
     public interface IServiceProxyFactory
     {
-        IAccuWeatherSerivce GetAccuWeatherSerivce();
-        IGmailSerivce GetGmailSerivce();
+        IWeatherService GetWeatherService();
+        IEmailService GetEmailService();
     }
 
     public class ServiceProxyFactory: IServiceProxyFactory
@@ -21,14 +23,14 @@ namespace WeatherTextMessager.Logic.Api
             _logger = logger;
             _appSettings = appSettings;
         }
-        public IAccuWeatherSerivce GetAccuWeatherSerivce()
+        public IWeatherService GetWeatherService()
         {
             if (_appSettings.AccuWeatherSettings.UseActualService)
                 return new AccuWeatherSerivce(_logger, _appSettings);
             _logger.Log("Using fake AccuWeatherService");
-            return new FakeAccuWeatherService();
+            return new FakeWeatherService();
         }
 
-        public IGmailSerivce GetGmailSerivce() => new GmailSerivce(_appSettings, _logger);
+        public IEmailService GetEmailService() => new GmailSerivce(_appSettings, _logger);
     }
 }

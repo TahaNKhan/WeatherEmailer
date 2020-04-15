@@ -1,13 +1,13 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using System;
-using WeatherTextMessager.Logging;
-using WeatherTextMessager.Logic;
-using WeatherTextMessager.Logic.Api;
+using WeatherEmailer.Logging;
+using WeatherEmailer.Logic;
+using WeatherEmailer.Logic.Api;
 using Microsoft.Extensions.Configuration;
 using System.IO;
-using WeatherTextMessager.Configuration;
+using WeatherEmailer.Configuration;
 
-namespace WeatherTextMessager
+namespace WeatherEmailer
 {
     class Program
     {
@@ -38,6 +38,10 @@ namespace WeatherTextMessager
             catch (Exception ex)
             {
                 logger.Log(ex.ToString());
+            }
+            finally
+            {
+                logger.Publish();
             }
         }
     }

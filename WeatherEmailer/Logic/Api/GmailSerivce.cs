@@ -7,16 +7,13 @@ using System.Net.Mail;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using WeatherTextMessager.Configuration;
-using WeatherTextMessager.Logging;
+using WeatherEmailer.Configuration;
+using WeatherEmailer.Logging;
+using WeatherEmailer.Logic.Api.Interfaces;
 
-namespace WeatherTextMessager.Logic.Api
+namespace WeatherEmailer.Logic.Api
 {
-    public interface IGmailSerivce
-    {
-        Task SendEmailAsync(IEnumerable<string> to, string subject, string body, CancellationToken cancellationToken = default);
-    }
-    public class GmailSerivce : IGmailSerivce
+    public class GmailSerivce : IEmailService
     {
         private readonly Logging.ILogger _logger;
         private readonly AppSettings _appSettings;
@@ -26,7 +23,6 @@ namespace WeatherTextMessager.Logic.Api
             _logger = logger;
             _appSettings = appSettings;
         }
-
 
         public async Task SendEmailAsync(IEnumerable<string> recepients, string subject, string body, CancellationToken cancellationToken = default)
         {

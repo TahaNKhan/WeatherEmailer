@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace WeatherTextMessager.Logic.Helpers
+namespace WeatherEmailer.Logic.Helpers
 {
     public static class WeatherHelpers
     {

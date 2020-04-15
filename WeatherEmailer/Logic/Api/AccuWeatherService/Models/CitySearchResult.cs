@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace WeatherTextMessager.Logic.Api.AccuWeatherServiceModels
+namespace WeatherEmailer.Logic.Api.AccuWeatherService.Models
 {
     public class CitySearchResult
     {
@@ -24,7 +24,7 @@ namespace WeatherTextMessager.Logic.Api.AccuWeatherServiceModels
         public IEnumerable<Supplementaladminarea> SupplementalAdminAreas { get; set; }
         public IEnumerable<string> DataSets { get; set; }
     }
-    
+
     public class Region
     {
         public string ID { get; set; }

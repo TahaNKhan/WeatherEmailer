@@ -1,16 +1,14 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using WeatherTextMessager.Configuration;
-using WeatherTextMessager.Logging;
-using WeatherTextMessager.Logic.Api;
-using WeatherTextMessager.Logic.Api.AccuWeatherServiceModels;
-using WeatherTextMessager.Logic.Helpers;
+using WeatherEmailer.Logic.Api.AccuWeatherService;
+using WeatherEmailer.Logic.Api.AccuWeatherService.Models;
+using WeatherEmailer.Configuration;
+using WeatherEmailer.Logic.Api;
+using WeatherEmailer.Logic.Helpers;
 
-namespace WeatherTextMessager.Logic
+namespace WeatherEmailer.Logic
 {
     public interface ISendWeatherInformationTask
     {
@@ -18,56 +16,41 @@ namespace WeatherTextMessager.Logic
     }
     public class SendWeatherInformationTask: ISendWeatherInformationTask
     {
-        private readonly ILogger _logger;
         private readonly IServiceProxyFactory _serviceProxyFactory;
         private readonly AppSettings _appSettings;
-        public SendWeatherInformationTask(ILogger logger, IServiceProxyFactory serviceProxyFactory, AppSettings appSettings)
+        public SendWeatherInformationTask(IServiceProxyFactory serviceProxyFactory, AppSettings appSettings)
         {
-            _logger = logger;
             _serviceProxyFactory = serviceProxyFactory;
             _appSettings = appSettings;
         }
 
         public async Task SendWeatherInformation(CancellationToken cancellationToken = default)
         {
-            var cityWithState = $"{_appSettings.CurrentCity} {_appSettings.CurrentState}";
-
-            var accuWeatherSerivce = _serviceProxyFactory.GetAccuWeatherSerivce();
-            var locationKey = await ObtainLocationKey(accuWeatherSerivce, cityWithState, cancellationToken);
-
-            var weatherResponse = await accuWeatherSerivce.GetWeatherData(locationKey, cancellationToken);
-
-            var subject = $"Weather Update - {cityWithState}";
-            var body = BuildEmailBody(weatherResponse);
-            var gmailService = _serviceProxyFactory.GetGmailSerivce();
-            await gmailService.SendEmailAsync(_appSettings.Emails, subject, body.ToString());
+            var weatherService = _serviceProxyFactory.GetWeatherService();
+            var weatherInfo = await weatherService.GetWeatherInformationAsync(_appSettings.CurrentCity, _appSettings.CurrentState, cancellationToken);
+            var subject = $"Weather Update - {_appSettings.CurrentCity} {_appSettings.CurrentState}";
+            var body = BuildEmailBody(weatherInfo);
+            var emailService = _serviceProxyFactory.GetEmailService();
+            await emailService.SendEmailAsync(_appSettings.Emails, subject, body.ToString());
         }
 
-        internal virtual string BuildEmailBody(DailyForecastResponse weatherResponse)
+        internal virtual string BuildEmailBody(Contracts.WeatherInformation weatherInfo)
         {
-            var dailyForecast = weatherResponse.DailyForecasts.First();
             var body = new StringBuilder();
-            body.AppendLine(weatherResponse.Headline.Text);
-            var loTemp = dailyForecast.Temperature.Minimum;
-            var hiTemp = dailyForecast.Temperature.Maximum;
-            if (loTemp.Unit == "F")
+            body.AppendLine(weatherInfo.Headline);
+            var loTemp = weatherInfo.Temperature.Low;
+            var hiTemp = weatherInfo.Temperature.High;
+            if (loTemp.Unit == Contracts.TemperatureValue.TemperatureUnit.Fahrenheit)
             {
-                body.AppendLine($"Low: {loTemp.Value + loTemp.Unit}/{loTemp.Value.ToCelsius()}C");
-                body.AppendLine($"Hi: {hiTemp.Value + loTemp.Unit}/{hiTemp.Value.ToCelsius()}C");
+                body.AppendLine($"Low: {loTemp}/{loTemp.Value.ToCelsius()}C");
+                body.AppendLine($"Hi: {hiTemp}/{hiTemp.Value.ToCelsius()}C");
             }
             else
             {
-                body.AppendLine($"Low: {loTemp.Value + loTemp.Unit}");
-                body.AppendLine($"Hi: {hiTemp.Value + hiTemp.Unit}");
+                body.AppendLine($"Low: {loTemp}");
+                body.AppendLine($"Hi: {hiTemp}");
             }
             return body.ToString();
-        }
-
-        internal virtual async Task<string> ObtainLocationKey(IAccuWeatherSerivce accuWeatherService, string cityWithState, CancellationToken cancellationToken = default)
-        {
-            var cityResults = await accuWeatherService.SearchCity(cityWithState, cancellationToken);
-            var closestMatch = cityResults.FirstOrDefault();
-            return closestMatch.Key;
         }
     }
 }

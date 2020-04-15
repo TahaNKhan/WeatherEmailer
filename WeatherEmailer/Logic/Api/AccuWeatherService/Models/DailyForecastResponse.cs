@@ -1,8 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text;
 
-namespace WeatherTextMessager.Logic.Api.AccuWeatherServiceModels
+namespace WeatherEmailer.Logic.Api.AccuWeatherService.Models
 {
 
     public class DailyForecastResponse
@@ -13,12 +12,12 @@ namespace WeatherTextMessager.Logic.Api.AccuWeatherServiceModels
 
     public class Headline
     {
-        public DateTime EffectiveDate { get; set; }
+        public DateTimeOffset EffectiveDate { get; set; }
         public decimal EffectiveEpochDate { get; set; }
         public decimal Severity { get; set; }
         public string Text { get; set; }
         public string Category { get; set; }
-        public DateTime EndDate { get; set; }
+        public DateTimeOffset EndDate { get; set; }
         public decimal EndEpochDate { get; set; }
         public string MobileLink { get; set; }
         public string Link { get; set; }
@@ -26,7 +25,7 @@ namespace WeatherTextMessager.Logic.Api.AccuWeatherServiceModels
 
     public class DailyForecast
     {
-        public DateTime Date { get; set; }
+        public DateTimeOffset Date { get; set; }
         public decimal EpochDate { get; set; }
         public Temperature Temperature { get; set; }
         public Day Day { get; set; }
@@ -38,18 +37,11 @@ namespace WeatherTextMessager.Logic.Api.AccuWeatherServiceModels
 
     public class Temperature
     {
-        public Minimum Minimum { get; set; }
-        public Maximum Maximum { get; set; }
+        public TemperatureUnit Minimum { get; set; }
+        public TemperatureUnit Maximum { get; set; }
     }
 
-    public class Minimum
-    {
-        public decimal Value { get; set; }
-        public string Unit { get; set; }
-        public decimal UnitType { get; set; }
-    }
-
-    public class Maximum
+    public class TemperatureUnit
     {
         public decimal Value { get; set; }
         public string Unit { get; set; }

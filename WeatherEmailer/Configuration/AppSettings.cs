@@ -4,7 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace WeatherTextMessager.Configuration
+namespace WeatherEmailer.Configuration
 {
     public class AppSettings
     {

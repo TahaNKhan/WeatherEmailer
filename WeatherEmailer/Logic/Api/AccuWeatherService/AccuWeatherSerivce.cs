@@ -8,27 +8,38 @@ using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Web;
-using WeatherTextMessager.Configuration;
-using WeatherTextMessager.Logic.Api.AccuWeatherServiceModels;
+using WeatherEmailer.Logic.Api.AccuWeatherService.Models;
+using WeatherEmailer.Configuration;
+using WeatherEmailer.Logic.Api.Interfaces;
+using WeatherEmailer.Contracts;
 
-namespace WeatherTextMessager.Logic.Api
+namespace WeatherEmailer.Logic.Api.AccuWeatherService
 {
-    public interface IAccuWeatherSerivce 
+    public class AccuWeatherSerivce: IWeatherService
     {
-        Task<DailyForecastResponse> GetWeatherData(string locationKey, CancellationToken cancellationToken = default);
-        Task<IEnumerable<CitySearchResult>> SearchCity(string cityWithState, CancellationToken cancellationToken = default);
-    }
-    public class AccuWeatherSerivce : IAccuWeatherSerivce
-    {
-        private readonly Logging.ILogger _logger;
-        private readonly Configuration.AppSettings _appSettings;
+        private readonly WeatherEmailer.Logging.ILogger _logger;
+        private readonly WeatherEmailer.Configuration.AppSettings _appSettings;
         public AccuWeatherSerivce(Logging.ILogger logger, AppSettings appSettings)
         {
             _logger = logger;
             _appSettings = appSettings;
         }
 
-        public async Task<IEnumerable<CitySearchResult>> SearchCity(string cityWithState, CancellationToken cancellationToken = default)
+        #region IWeatherService
+        public async Task<WeatherInformation> GetWeatherInformationAsync(string city, string state, CancellationToken cancellationToken = default)
+        {
+            var locationName = $"{city} {state}";
+            var citySearchResults = await SearchCity(locationName, cancellationToken);
+            var bestMatch = citySearchResults.FirstOrDefault();
+            if (bestMatch == null)
+                throw new Exceptions.LocationNotFoundException(locationName);
+            var weatherInfo = await GetWeatherData(bestMatch.Key, cancellationToken);
+            var mappedContract = MapAccuWeatherDataToContract(weatherInfo);
+            return mappedContract;
+        }
+        #endregion IWeatherService
+
+        internal virtual async Task<IEnumerable<CitySearchResult>> SearchCity(string cityWithState, CancellationToken cancellationToken = default)
         {
             var apiKey = _appSettings.AccuWeatherSettings.ApiKey;
             var baseUrl = "http://dataservice.accuweather.com/locations/v1/cities/search";
@@ -43,7 +54,7 @@ namespace WeatherTextMessager.Logic.Api
             try
             {
                 var result = await webClient.GetAsync(baseUrl, cancellationToken);
-                if (result.StatusCode != System.Net.HttpStatusCode.OK)
+                if (result.StatusCode != HttpStatusCode.OK)
                 {
                     _logger.Log("Failed to search cities in accuweather, details:");
                     _logger.Log($"Status code: {(int)result.StatusCode}");
@@ -61,10 +72,10 @@ namespace WeatherTextMessager.Logic.Api
                 _logger.Log("Failed to search cities in accuweather");
                 throw;
             }
-           
+
         }
 
-        public async Task<DailyForecastResponse> GetWeatherData(string locationKey, CancellationToken cancellationToken = default)
+        internal virtual async Task<DailyForecastResponse> GetWeatherData(string locationKey, CancellationToken cancellationToken = default)
         {
             var apiKey = _appSettings.AccuWeatherSettings.ApiKey;
             var baseUrl = $"http://dataservice.accuweather.com/forecasts/v1/daily/1day/{locationKey}";
@@ -78,7 +89,7 @@ namespace WeatherTextMessager.Logic.Api
             try
             {
                 var result = await webClient.GetAsync(baseUrl, cancellationToken);
-                if (result.StatusCode != System.Net.HttpStatusCode.OK)
+                if (result.StatusCode != HttpStatusCode.OK)
                 {
                     _logger.Log("Failed to get weather data, details:");
                     _logger.Log($"Status code: {(int)result.StatusCode}");
@@ -91,55 +102,52 @@ namespace WeatherTextMessager.Logic.Api
                 _logger.Log($"Response: {contentString}");
                 return JsonSerializer.Deserialize<DailyForecastResponse>(contentString);
             }
-            catch (HttpRequestException ex)
+            catch (HttpRequestException)
             {
-                _logger.Log("Failed to get weather data, details:");
-                _logger.Log(ex.ToString());
-                return null;
+                _logger.Log("Failed to get weather data.");
+                throw;
             }
         }
-    }
-    public class FakeAccuWeatherService : IAccuWeatherSerivce
-    {
-        public Task<DailyForecastResponse> GetWeatherData(string locationKey, CancellationToken cancellationToken = default)
+
+        #region Mappers
+
+        internal virtual Contracts.WeatherInformation MapAccuWeatherDataToContract(DailyForecastResponse accuWeatherModel)
         {
-            var result = new DailyForecastResponse
+            var forecast = accuWeatherModel.DailyForecasts.First();
+            var headline = accuWeatherModel.Headline.Text;
+            var high = MapAccuWeatherTempatureToContract(forecast.Temperature.Maximum);
+            var low = MapAccuWeatherTempatureToContract(forecast.Temperature.Minimum);
+            return new Contracts.WeatherInformation
             {
-                DailyForecasts = new[]
+                Headline = headline,
+                Temperature = new Contracts.Temperature
                 {
-                    new DailyForecast
-                    {
-                        Temperature = new Temperature
-                        {
-                            Minimum = new Minimum
-                            {
-                                Unit = "F",
-                                Value = 40
-                            },
-                            Maximum = new Maximum
-                            {
-                                Unit = "F",
-                                Value = 55
-                            }
-                        }
-                    }
-                },
-                Headline = new Headline
-                {
-                    Text = "Fake weather test"
+                    High = high,
+                    Low = low
                 }
             };
-            return Task.FromResult(result);
+
         }
 
-        public Task<IEnumerable<CitySearchResult>> SearchCity(string cityWithState, CancellationToken cancellationToken = default)
+        internal virtual TemperatureValue MapAccuWeatherTempatureToContract(Models.TemperatureUnit accuWeatherTemperature)
         {
-            var result = new CitySearchResult
+            return new TemperatureValue
             {
-                Key = "some key"
+                Unit = MapAccuWeatherTemperatureUnitToContract(accuWeatherTemperature.Unit),
+                Value = accuWeatherTemperature.Value
             };
-
-            return Task.FromResult(new[] { result }.AsEnumerable());
         }
+
+        internal virtual TemperatureValue.TemperatureUnit MapAccuWeatherTemperatureUnitToContract(string unit)
+        {
+            return unit switch
+            {
+                "F" => TemperatureValue.TemperatureUnit.Fahrenheit,
+                "C" => TemperatureValue.TemperatureUnit.Celsius,
+                _ => throw new Exception("Invalid temperature unit"),
+            };
+        }
+
+        #endregion Mappers
     }
 }
