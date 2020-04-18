@@ -31,6 +31,6 @@ namespace WeatherEmailer.Logic.Api
             return new FakeWeatherService();
         }
 
-        public IEmailService GetEmailService() => new GmailSerivce(_appSettings, _logger);
+        public IEmailService GetEmailService() => new GmailService(_appSettings, _logger);
     }
 }

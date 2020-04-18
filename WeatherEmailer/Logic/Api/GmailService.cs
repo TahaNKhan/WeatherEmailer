@@ -13,12 +13,12 @@ using WeatherEmailer.Logic.Api.Interfaces;
 
 namespace WeatherEmailer.Logic.Api
 {
-    public class GmailSerivce : IEmailService
+    public class GmailService : IEmailService
     {
         private readonly Logging.ILogger _logger;
         private readonly AppSettings _appSettings;
 
-        public GmailSerivce(AppSettings appSettings, ILogger logger)
+        public GmailService(AppSettings appSettings, ILogger logger)
         {
             _logger = logger;
             _appSettings = appSettings;
