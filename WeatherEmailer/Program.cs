@@ -6,6 +6,8 @@ using WeatherEmailer.Logic.Api;
 using Microsoft.Extensions.Configuration;
 using System.IO;
 using WeatherEmailer.Configuration;
+using WeatherEmailer.Persistence;
+using WeatherEmailer.Persistence.Interfaces;
 
 namespace WeatherEmailer
 {
@@ -23,6 +25,7 @@ namespace WeatherEmailer
                .AddSingleton<IServiceProxyFactory, ServiceProxyFactory>()
                .AddSingleton<ILogger, BasicLogger>()
                .AddSingleton(appSettings)
+               .AddSingleton<IDataContextFactory, DataContextFactory>()
                .AddTransient<ISendWeatherInformationTask, SendWeatherInformationTask>()
                .BuildServiceProvider();
             var logger = serviceProvider.GetService<ILogger>();

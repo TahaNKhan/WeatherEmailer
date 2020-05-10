@@ -12,11 +12,7 @@ namespace WeatherEmailer.Configuration
         public string Email { get; set; }
         public string EmailPassword { get; set; }
         public AccuWeatherSettings AccuWeatherSettings { get; set; }
-        public string EmailsCSV { get; set; }
-        public IEnumerable<string> Emails => EmailsCSV.Split(',');
         public string LoggingLocation { get; set; }
-        public string CurrentCity { get; set; }
-        public string CurrentState { get; set; }
     }
 
     public class AccuWeatherSettings

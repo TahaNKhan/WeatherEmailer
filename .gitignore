@@ -358,3 +358,4 @@ MigrationBackup/
 
 # Exclude release settings file
 appsettings.release.json
+/WeatherEmailer/DataFile.json
