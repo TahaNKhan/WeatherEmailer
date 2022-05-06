@@ -17,7 +17,7 @@ namespace WeatherEmailer
         {
             var config = new ConfigurationBuilder()
                 .SetBasePath(Path.Combine(AppContext.BaseDirectory))
-                .AddJsonFile($"appsettings.json", optional: false)
+                .AddJsonFile(GetConfigurationFileName(), optional: false)
                 .Build();
             var appSettings = new AppSettings();
             config.GetSection("AppSettings").Bind(appSettings);
@@ -46,6 +46,15 @@ namespace WeatherEmailer
             {
                 logger.Publish();
             }
+        }
+
+        static string GetConfigurationFileName()
+        {
+            const string releaseSettingsFileName = "appsettings.release.json";
+            const string devSettingsFileName = "appsettings.json";
+            if (HelperUtils.CheckFileExistsInBuildDirectory(releaseSettingsFileName))
+                return releaseSettingsFileName;
+            return devSettingsFileName;
         }
     }
 }

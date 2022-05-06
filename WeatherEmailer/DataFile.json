@@ -1,0 +1,10 @@
+{
+    "userLocations": [
+        {
+            "userName": "John Smith",
+            "city": "Los Angeles",
+            "state": "CA",
+            "emails": ["example@gmail.com"]
+        }
+    ]
+}

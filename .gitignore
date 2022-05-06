@@ -358,4 +358,6 @@ MigrationBackup/
 
 # Exclude release settings file
 appsettings.release.json
-/WeatherEmailer/DataFile.json
+/WeatherEmailer/DataFile.release.json
+WeatherEmailer/.vscode/launch.json
+WeatherEmailer/.vscode/tasks.json
